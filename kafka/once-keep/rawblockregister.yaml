@@ -1,0 +1,48 @@
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: e5105pc01-rook-lv
+  labels:
+    osd: "true"
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 30Gi
+  local:
+    path: /dev/ubuntu-vg/rook-lv
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - e5105pc01
+---
+kind: PersistentVolume
+apiVersion: v1
+metadata:
+  name: e5105pc02-rook-lv
+  labels:
+    osd: "true"
+spec:
+  volumeMode: Block
+  capacity:
+    storage: 30Gi
+  local:
+    path: /dev/ubuntu-vg/rook-lv
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/hostname
+          operator: In
+          values:
+          - e5105pc02

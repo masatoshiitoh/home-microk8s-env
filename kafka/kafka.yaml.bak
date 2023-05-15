@@ -1,0 +1,123 @@
+# Edited. 
+apiVersion: v1
+kind: Service
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+spec:
+  ports:
+  - name: kafka
+    port: 9092
+  selector:
+    app: kafka
+  type: LoadBalancer
+---
+## Edited
+#apiVersion: v1
+#kind: CephFilesystem
+#metadata:
+#  name: kafka-fs
+#  namespace: rook-ceph
+#spec:
+#  metadataPool:
+#    replicated:
+#      size: 3
+#  dataPools:
+#    - name: replicated
+#      replicated:
+#        size: 3
+#  preserveFilesystemOnDelete: true
+#  metadataServer:
+#    activeCount: 1
+#    activeStandby: true
+#
+---
+# Edited
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: localvolume-pvc
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: microk8s-hostpath
+  resources:
+    requests:
+      storage: 10Gi
+      
+
+---
+##https://rook.io/docs/rook/latest/Storage-Configuration/Shared-Filesystem-CephFS/filesystem-storage/#create-the-filesystem
+#apiVersion: ceph.rook.io/v1
+#kind: CephFilesystem
+#metadata:
+#  name: myfs-kafka
+#  namespace: rook-ceph
+#spec:
+#  metadataPool:
+#    replicated:
+#      size: 3
+#  dataPools:
+#    - name: replicated
+#      replicated:
+#        size: 3
+#  preserveFilesystemOnDelete: true
+#  metadataServer:
+#    activeCount: 1
+#    activeStandby: true
+#
+---
+# Edited
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: kafka
+  labels:
+    app: kafka
+    tier: kafka
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: kafka
+      tier: kafka
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: kafka
+        tier: kafka
+    spec:
+      containers:
+        - image: docker.io/bitnami/kafka:3.4
+          name: kafka
+          env:
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: 'yes'
+          ports:
+            - containerPort: 9092
+              name: kafka
+          volumeMounts:
+            - name: kafka-data
+              mountPath: /bitnami/kafka
+      volumes:
+        - name: kafka-data
+          persistentVolumeClaim:
+            claimName: localvolume-pvc
+            readOnly: false
+          
+        #- name: kafka-data
+        #  flexVolume:
+        #    driver: ceph.rook.io/rook
+        #    fsType: ceph
+        #    options:
+        #      fsname: myfs-kafka
+        #      clusterNamespace: rook-ceph
+        
+        #- name: kafka-data
+        #  persistentVolumeClaim:
+        #    claimName: cephfs-pvc
+        #    readOnly: false
+
