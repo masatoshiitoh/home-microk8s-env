@@ -11,11 +11,7 @@ spec:
   - protocol: "TCP"
     port: 9092
     targetPort: 9092
-    name: "kafka-internal"
-  - protocol: "TCP"
-    port: 9094
-    targetPort: 9094
-    name: "kafka-external"
+    name: "kafka"
   type: LoadBalancer
 ---
 apiVersion: v1
@@ -58,8 +54,6 @@ spec:
               value: 'no'
             - name: KAFKA_CFG_LISTENERS
               value: 'PLAINTEXT://:9092'
-            - name: KAFKA_CFG_ADVERTISED_LISTENERS
-              value: 'PLAINTEXT://kafka-internal:9092'
 
           volumeMounts:
             - name: kafka-data
