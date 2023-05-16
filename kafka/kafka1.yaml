@@ -49,52 +49,32 @@ spec:
     app: kafka
   type: LoadBalancer
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: zookeeper
-spec:
-  ports:
-    - name: zookeeper-client
-      port: 2181
-  selector:
-    app: zookeeper
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: kafka-zookeeper
+  name: kafka
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: kafka-zookeeper
+      app: kafka
   template:
     metadata:
       labels:
-        app: kafka-zookeeper
+        app: kafka
     spec:
       containers:
-        - name: zookeeper
-          env:
-            - name: ALLOW_ANONYMOUS_LOGIN
-              value: "yes"
-          image: docker.io/bitnami/zookeeper:3.8
-          ports:
-            - containerPort: 2181
-          volumeMounts:
-            - name: zookeeper-data
-              mountPath: /bitnami
         - name: kafka
           image: docker.io/bitnami/kafka:3.4
           ports:
             - containerPort: 9092
             - containerPort: 9094
+          env:
+            - name: ALLOW_PLAINTEXT_LISTENER
+              value: "yes"
           volumeMounts:
             - name: kafka-data
               mountPath: /bitnami
       volumes:
-        - name: zookeeper-data
-          emptyDir: {}
         - name: kafka-data
           emptyDir: {}
