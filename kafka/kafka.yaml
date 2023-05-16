@@ -1,24 +1,27 @@
-# Edited. 
+# https://kubernetes.io/ja/docs/tasks/access-application-cluster/connecting-frontend-backend/
 apiVersion: v1
 kind: Service
 metadata:
   name: kafka
-  labels:
-    app: kafka
 spec:
-  ports:
-    #- name: kafka
-    #port: 9092
-  - name: kafka-external
-    port: 9094
   selector:
-    app: kafka
+    app: kafka-zookeeper
+    tier: kafka
+  ports:
+  - protocol: "TCP"
+    port: 9092
+    targetPort: 9092
+    name: "kafka-internal"
+  - protocol: "TCP"
+    port: 9094
+    targetPort: 9094
+    name: "kafka-external"
   type: LoadBalancer
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: localvolume-pvc
+  name: localvolume-kafka-pvc
 spec:
   accessModes:
   - ReadWriteOnce
@@ -31,47 +34,33 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: kafka
-  labels:
-    app: kafka
-    tier: kafka
 spec:
-  replicas: 1
   selector:
     matchLabels:
-      app: kafka
+      app: kafka-zookeeper
       tier: kafka
-  strategy:
-    type: Recreate
+  replicas: 1
   template:
     metadata:
       labels:
-        app: kafka
+        app: kafka-zookeeper
         tier: kafka
     spec:
       containers:
-        - image: docker.io/bitnami/kafka:3.4
-          name: kafka
+        - name: kafka
+          image: bitnami/kafka:latest
           env:
             - name: ALLOW_PLAINTEXT_LISTENER
               value: 'yes'
-            - name: KAFKA_CFG_BACKGROUND_THREADS
-              value: "10"
             - name: KAFKA_CFG_LISTENER_SECURITY_PROTOCOL_MAP
               value: "PLAINTEXT:PLAINTEXT,EXTERNAL:PLAINTEXT"
             - name: KAFKA_CFG_LISTENERS
               value: "PLAINTEXT://:9092,EXTERNAL://:9094"
-                #- name: KAFKA_CFG_ADVERTISED_LISTENERS
-                #value: "PLAINTEXT://kafka.default.svc.cluster.local:9092,EXTERNAL://192.168.86.153:9094"
-          ports:
-            #- containerPort: 9092
-            #name: kafka
-            - containerPort: 9094
-              name: kafka-external
           volumeMounts:
             - name: kafka-data
-              mountPath: /bitnami/kafka
+              mountPath: /bitnami
       volumes:
         - name: kafka-data
           persistentVolumeClaim:
-            claimName: localvolume-pvc
+            claimName: localvolume-kafka-pvc
             readOnly: false
